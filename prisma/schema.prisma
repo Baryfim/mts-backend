@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL")
+  url      = env("POSTGRES_PRISMA_URL")
 }
 
 model User {
@@ -22,10 +22,10 @@ model User {
   group   Group @relation(fields: [groupId], references: [id])
   groupId Int
 
-  department Department
+  department Department @default(REFERENCE)
 
   posts Post[]
-  
+
   refreshTokens Json?
 
   readState ReadState[]
@@ -45,27 +45,33 @@ enum Department {
 model Group {
   id Int @id @default(autoincrement())
 
-  goal   Goal @relation(fields: [goalId], references: [id])
-  goalId Int
+  title String
+
+  goals Goal[]
 
   users User[]
 
   groupOnPostCategory GroupOnPostCategory[]
+
+  department Department
 }
 
 model GroupOnPostCategory {
-  group Group @relation(fields: [groupId], references: [id])
+  group   Group @relation(fields: [groupId], references: [id])
   groupId Int
 
-  postCategory PostCategory @relation(fields: [postCategoryId], references: [id])
+  postCategory   PostCategory @relation(fields: [postCategoryId], references: [id])
   postCategoryId Int
 
   @@id([groupId, postCategoryId])
 }
 
 model Goal {
-  id    Int      @id @default(autoincrement())
-  group Group[]
+  id Int @id @default(autoincrement())
+
+  group   Group @relation(fields: [groupId], references: [id])
+  groupId Int
+
   month DateTime
 
   quantityPercent Float // количество
@@ -73,7 +79,7 @@ model Goal {
 }
 
 model PostCategory {
-  id    Int     @id @default(autoincrement())
+  id    Int    @id @default(autoincrement())
   title String
 
   groupOnPostCategory GroupOnPostCategory[]
@@ -82,24 +88,24 @@ model PostCategory {
 }
 
 model Post {
-  id             Int         @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  title          String
-  body           String
-  isRelevant     Boolean
-  isPublished    Boolean
+  title       String
+  body        String
+  isRelevant  Boolean
+  isPublished Boolean
 
-  publishedBy    User        @relation(fields: [publisherId], references: [id])
-  publisherId         Int
+  publishedBy User @relation(fields: [publisherId], references: [id])
+  publisherId Int
 
   publishingDate DateTime
-  editingDate    DateTime    @updatedAt()
-  creationDate   DateTime    @default(now())
+  editingDate    DateTime @updatedAt()
+  creationDate   DateTime @default(now())
 
-  postCategory PostCategory @relation(fields: [postCategoryId], references: [id])
+  postCategory   PostCategory @relation(fields: [postCategoryId], references: [id])
   postCategoryId Int
-  
-  readState      ReadState[]
+
+  readState ReadState[]
 }
 
 model ReadState {

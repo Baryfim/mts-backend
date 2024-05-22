@@ -13,6 +13,6 @@ import { LocalStrategy } from "./local.strategy";
     imports: [
         JwtModule.register({}),
     ],
-    providers: [AuthService, UsersService, PrismaService, LocalStrategy, JwtStrategy, JwtRefreshStrategy]
+    providers: [AuthService, PrismaService, UsersService, LocalStrategy, JwtStrategy, JwtRefreshStrategy]
 })
 export class AuthModule { }

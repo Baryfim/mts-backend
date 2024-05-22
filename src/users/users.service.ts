@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
-import { AuthUserCredentials } from 'src/auth/auth.types';
-import { PrismaService } from 'prisma';
+import { Department, User } from '@prisma/client';
 import { createHash } from 'crypto';
+import { CreateUserDto } from 'src/auth/auth.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
@@ -21,11 +21,18 @@ export class UsersService {
     return user;
   }
 
-  async createOne(data: AuthUserCredentials) {
+  async getGroupsInDepartment(department: Department) {
+    const groups = await this.prisma.group.findMany({
+      where: {
+        department,
+      }
+    });
+    return groups;
+  }
+
+  async createOne(data: CreateUserDto) {
     const user: User = await this.prisma.user.create({
-      data: {
-        ...data,
-      },
+      data,
     });
 
     return user;
@@ -45,7 +52,7 @@ export class UsersService {
   async updateRefreshTokens(login: string, password: string, oldRefreshToken: string, newRefreshToken: string) {
     const now = Date.now();
 
-    const user: User = await this.findOne(login);
+    const user: User = await this.findOne(login, password);
     let userRefreshTokens = user.refreshTokens as any;
 
     if (Boolean(userRefreshTokens)) {
@@ -79,7 +86,7 @@ export class UsersService {
   }
 
   async buildUserResponse(user: User) {
-    const { id, login, name, surname, crmId, role, isSenior, groupId, department,  refreshTokens, ...userForFrontend } = user;
-    return userForFrontend;
+    const { id, crmId, groupId, refreshTokens, ...userForFrontend } = user;
+    return { ...userForFrontend };
   }
 }

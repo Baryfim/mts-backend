@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { User } from '@prisma/client';
-import { AuthUserCredentials, AuthUserCredentialsPartitial, AuthUserJwtCredentials, CreateUserCredentials } from './auth.types';
+import { Group, User, UserRole } from '@prisma/client';
+import { AuthUserCredentialsPartitial, AuthUserJwtCredentials } from './auth.types';
 import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -16,14 +17,26 @@ export class AuthService {
         return user;
     }
 
-    async createUserWithCredentials(authUserCredentials: AuthUserCredentials, req: any) {
-        let user = await this.usersService.findOne(authUserCredentials.login, authUserCredentials.password);
-        if (!Boolean(user)) {
-            const createUserCredentials: CreateUserCredentials = {
-                ...authUserCredentials,
-                department: req.user.role,
-            };
-            user = await this.usersService.createOne(createUserCredentials as AuthUserCredentials);
+    async buildCreateUserResponse(user: User, createUserDto: CreateUserDto) {
+        let newUser = await this.usersService.findOne(createUserDto.login, createUserDto.password);
+        if (!Boolean(newUser)) {
+            if (user.department == createUserDto.department) {
+                const userRole = user.role;
+                if (userRole == UserRole.EMPLOYEE) {
+                    throw new HttpException("You do not have rights to create users.", HttpStatus.UNAUTHORIZED);
+                }
+                else if (userRole == UserRole.TEAM_LEADER && (user.department != createUserDto.department || user.groupId != createUserDto.groupId)) {
+                    throw new HttpException("You can not create users not in your group.", HttpStatus.UNAUTHORIZED);
+                }
+                else if (userRole == UserRole.DEPARTMENT_HEAD) {
+                    const userGroups: Group[] = await this.usersService.getGroupsInDepartment(user.department);
+                    if (userGroups.filter(group => group.id == createUserDto.groupId).length == 0) {
+                        throw new HttpException("You can not create users not in your department.", HttpStatus.UNAUTHORIZED);
+                    }
+                }
+                newUser = await this.usersService.createOne(createUserDto);
+                return this.buildProfileResponse(newUser);
+            }
         }
     }
 
@@ -66,7 +79,7 @@ export class AuthService {
             expiresIn: +process.env.JWT_REFRESH_EXPIRATION_TIME,
         });
 
-        const savedTokenInDatabase = await this.usersService.updateRefreshTokens(user.login, oldRefreshToken, newRefreshToken);
+        const savedTokenInDatabase = await this.usersService.updateRefreshTokens(user.login, user.password, oldRefreshToken, newRefreshToken);
 
         if (savedTokenInDatabase) {
             return newRefreshToken;
