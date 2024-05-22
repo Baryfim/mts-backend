@@ -25,6 +25,8 @@ model User {
   department Department
 
   posts Post[]
+  
+  refreshTokens Json?
 
   readState ReadState[]
 }
