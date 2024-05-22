@@ -4,5 +4,110 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = env("POSTGRES_PRISMA_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  login    String @unique
+  password String
+
+  name    String
+  surname String
+  crmId   String
+
+  role     UserRole @default(EMPLOYEE)
+  isSenior Boolean  @default(false)
+
+  group   Group @relation(fields: [groupId], references: [id])
+  groupId Int
+
+  department Department
+
+  posts Post[]
+
+  readState ReadState[]
+}
+
+enum UserRole {
+  EMPLOYEE
+  TEAM_LEADER
+  DEPARTMENT_HEAD
+}
+
+enum Department {
+  REFERENCE
+  SERVICE
+}
+
+model Group {
+  id Int @id @default(autoincrement())
+
+  goal   Goal @relation(fields: [goalId], references: [id])
+  goalId Int
+
+  users User[]
+
+  groupOnPostCategory GroupOnPostCategory[]
+}
+
+model GroupOnPostCategory {
+  group Group @relation(fields: [groupId], references: [id])
+  groupId Int
+
+  postCategory PostCategory @relation(fields: [postCategoryId], references: [id])
+  postCategoryId Int
+
+  @@id([groupId, postCategoryId])
+}
+
+model Goal {
+  id    Int      @id @default(autoincrement())
+  group Group[]
+  month DateTime
+
+  quantityPercent Float // количество
+  qualityPercent  Float // качество
+}
+
+model PostCategory {
+  id    Int     @id @default(autoincrement())
+  title String
+
+  groupOnPostCategory GroupOnPostCategory[]
+
+  posts Post[]
+}
+
+model Post {
+  id             Int         @id @default(autoincrement())
+
+  title          String
+  body           String
+  isRelevant     Boolean
+  isPublished    Boolean
+
+  publishedBy    User        @relation(fields: [publisherId], references: [id])
+  publisherId         Int
+
+  publishingDate DateTime
+  editingDate    DateTime    @updatedAt()
+  creationDate   DateTime    @default(now())
+
+  postCategory PostCategory @relation(fields: [postCategoryId], references: [id])
+  postCategoryId Int
+  
+  readState      ReadState[]
+}
+
+model ReadState {
+  id Int @id @unique @default(autoincrement())
+
+  isRead Boolean @default(false)
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  post   Post @relation(fields: [postId], references: [id])
+  postId Int
 }
