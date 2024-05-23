@@ -25,10 +25,10 @@ export class AuthController {
   async auth(@Req() req: any, @Res() res: any) {
     const { accessToken, refreshToken } = await this.authService.buildLoginResponse(req.user);
     res.setHeader('Set-Cookie', [
-        `accessToken=${accessToken}; HttpOnly; Path=/; Secure; SameSite=Lax; Max-Age=${+process.env.JWT_ACCESS_EXPIRATION_TIME}`,
-        `refreshToken=${refreshToken}; HttpOnly; Path=/; Secure; SameSite=Lax; Max-Age=${+process.env.JWT_REFRESH_EXPIRATION_TIME}`,
+      `accessToken=${accessToken}; HttpOnly; Path=/; Secure; SameSite=Lax; Max-Age=${+process.env.JWT_ACCESS_EXPIRATION_TIME}`,
+      `refreshToken=${refreshToken}; HttpOnly; Path=/; Secure; SameSite=Lax; Max-Age=${+process.env.JWT_REFRESH_EXPIRATION_TIME}`,
     ]);
-    return res.status(200).json({ message: 'Authenticated successfully' });
+    return res.status(200).json(await this.authService.buildProfileResponse(req.user));
   }
 
   @Post('profile')

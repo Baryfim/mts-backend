@@ -2,7 +2,7 @@ import { Department, UserRole } from '@prisma/client';
 import { z } from 'zod';
 
 export const createUserSchema = z.object({
-    login: z.string().trim().min(1).regex(/[a-zA-Z0-9]{8,16}/gmi),
+    login: z.string().trim().min(1).regex(/[a-zA-Z0-9]{4,16}/gmi),
     password: z.string().trim().regex(/[a-zA-Z0-9]{8,16}/gmi),
     name: z.string().trim().regex(/[а-яА-Я\sўіA-Za-z]{2,64}/gmi),
     surname: z.string().trim().regex(/[а-яА-Я\sўіA-Za-z]{2,64}/gmi),
@@ -16,7 +16,7 @@ export const createUserSchema = z.object({
 export type CreateUserDto = Required<z.infer<typeof createUserSchema>>
 
 export const authUserSchema = z.object({
-    username: z.string().trim().min(1).regex(/[a-zA-Z0-9]{8,16}/gmi),
+    username: z.string().trim().min(1).regex(/[a-zA-Z0-9]{4,16}/gmi),
     password: z.string().trim().regex(/[a-zA-Z0-9]{8,16}/gmi),
 }).required();
 
