@@ -4,12 +4,14 @@ import { Group, User, UserRole } from '@prisma/client';
 import { AuthUserCredentialsPartitial, AuthUserJwtCredentials } from './auth.types';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from './auth.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
-        private jwtService: JwtService
+        private jwtService: JwtService,
+        private prismaService: PrismaService
     ) { }
 
     async getUserWithJwt(token: string) {
@@ -20,6 +22,48 @@ export class AuthService {
         } catch (error) {
             console.error(error)
             return undefined;
+        }
+    }
+
+    async getAllUsersByGroup(user: User) {
+        switch(user.role) {
+            case "TEAM_LEADER":
+                const usersTeamLeader = await this.prismaService.user.findMany({
+                    where: {
+                        groupId: user.groupId,
+                    }
+                });
+                return usersTeamLeader;
+            case "DEPARTMENT_HEAD":
+                const usersDepartmentHead = await this.prismaService.user.findMany({
+                    where: {
+                        department: user.department,
+                    }
+                });
+                return usersDepartmentHead;
+            default:
+                throw new HttpException('FORBIDDEN', HttpStatus.FORBIDDEN)
+        }
+    }
+
+    async getAllGroups(user: User) {
+        switch(user.role) {
+            case "TEAM_LEADER":
+                const groupsTeamLeader = await this.prismaService.group.findFirst({
+                    where: {
+                        id: user.groupId,
+                    }
+                });
+                return groupsTeamLeader;
+            case "DEPARTMENT_HEAD":
+                const groupsDepartmentHead = await this.prismaService.group.findMany({
+                    where: {
+                        department: user.department,
+                    }
+                });
+                return groupsDepartmentHead;
+            default:
+                throw new HttpException('FORBIDDEN', HttpStatus.FORBIDDEN)
         }
     }
 

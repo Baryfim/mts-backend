@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Req,
   Res,
@@ -19,6 +20,18 @@ import { CreateUserDto, createUserSchema } from './auth.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
+
+  @Get('/users')
+  @UseGuards(JwtAuthGuard)
+  async getAllUsers(@Req() req: any) {
+    return this.authService.getAllUsersByGroup(req.user);
+  }
+
+  @Get('/groups')
+  @UseGuards(JwtAuthGuard)
+  async getAllGroups(@Req() req: any) {
+    return this.authService.getAllGroups(req.user);
+  }
 
   @Post()
   @UseGuards(LocalAuthGuard)
