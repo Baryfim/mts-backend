@@ -1,37 +1,43 @@
-import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import axios from 'axios';
+import { RedisService } from 'src/redis/redis.service';
 
-@WebSocketGateway()
-export class ChatGateway {
-  @WebSocketServer()
+// Интерфейс для сообщения чата
+interface Chat {
+  id: number;
+  text: string;
+}
+
+@WebSocketGateway(3000, {
+  namespace: 'chat'
+}) 
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  
+  @WebSocketServer() 
   server: Server;
 
+  constructor(private redisService: RedisService) {}
+
+  // Обработчик события 'sendMessage'
   @SubscribeMessage('sendMessage')
-  async handleMessage(client: Socket, payload: any) {
-    const message = payload.message || 'расскажи сказку';
-    const requestBody = {
-      model: 'llama3',
-      prompt: message,
-      stream: false,
-    };
+  async handleSendMessage(client: Socket, payload: Chat): Promise<void> {
+    console.log(payload); // Логируем полученное сообщение
+    this.server.emit('recMessage', payload); // Отправляем сообщение всем клиентам
+  }
 
-    try {
-      const response = await axios.post(
-        'http://localhost:11434/api/generate',
-        requestBody,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+  // Метод, вызываемый после инициализации
+  afterInit(server: Server) {
+    console.log('WebSocket сервер инициализирован');
+  }
 
-      // Send the response back to the client
-      client.emit('messageResponse', response.data);
-    } catch (error) {
-      console.error('Error while generating story:', error);
-      client.emit('messageResponse', { error: 'Failed to generate story' });
-    }
+  // Метод, вызываемый при отключении клиента
+  handleDisconnect(client: Socket) {
+    console.log(`Клиент отключился: ${client.id}`);
+    console.log(JSON.stringify(client))
+  }
+
+  // Метод, вызываемый при подключении клиента
+  handleConnection(client: Socket, ...args: any[]) {
+    console.log(`Клиент подключился: ${client.id}`);
   }
 }
