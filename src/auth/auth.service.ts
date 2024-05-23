@@ -12,6 +12,17 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
+    async getUserWithJwt(token: string) {
+        try {
+            const decoded = await this.jwtService.verify(token, { secret: process.env.JWT_ACCESS_SECRET });
+            console.log(decoded)
+            return await this.authUser(decoded);
+        } catch (error) {
+            console.error(error)
+            return undefined;
+        }
+    }
+
     async authUser(userCredentials: AuthUserCredentialsPartitial): Promise<any> {
         let user = await this.usersService.findOne(userCredentials.login, userCredentials.password);
         return user;
@@ -62,7 +73,7 @@ export class AuthService {
                 token: await this.getRefreshToken(user, refreshToken),
                 maxAge: +process.env.JWT_REFRESH_EXPIRATION_TIME
             },
-            user: this.buildProfileResponse(user),
+            user: await this.buildProfileResponse(user),
         };
     }
 

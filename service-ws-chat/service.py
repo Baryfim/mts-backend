@@ -1,25 +1,21 @@
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Body, HTTPException
+import json
 import ollama
 
 app = FastAPI()
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
+@app.post("/api/chat")
+async def chat_api(message: str = Body(..., embed=True)):
     try:
-        while True:
-            data = await websocket.receive_text()
-            response = await get_response(data)
-            await websocket.send_json({"status": 204, "response": response})
-    except WebSocketDisconnect:
-        print("Client disconnected")
-
-async def get_response(message: str):
-    print("start generate")
-    response = ollama.chat(model='llama3', messages=[{'role': 'user', 'content': message}])
-    return response['message']['content']
+        print("Start generating response")
+        response = ollama.chat(
+            model='llama3', messages=[{'role': 'user', 'content': message + " (на русском до 300 слов)"}]
+        )
+        return {"status": 200, "response": response['message']['content']}
+    except Exception as e:
+        print(f"Error generating response: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during generation")
 
 if __name__ == "__main__":
     import uvicorn
