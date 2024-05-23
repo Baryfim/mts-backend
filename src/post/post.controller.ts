@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { PostService } from './post.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
@@ -6,9 +6,10 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 export class PostController {
     constructor(private readonly postService: PostService) {}
 
-    @Get('/posts/:id')
+    @Get('/:id')
     @UseGuards(JwtAuthGuard)
     async getPostsByCategoryId(@Param("id") id: number, @Req() req: any) {
         return this.postService.getPostsByCategoryId(req, id);
     }
+    
 }
