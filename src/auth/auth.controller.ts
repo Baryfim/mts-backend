@@ -21,10 +21,17 @@ import { CreateUserDto, createUserSchema } from './auth.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
-  @Get('/users')
+  @Get('/users/groups')
   @UseGuards(JwtAuthGuard)
-  async getAllUsers(@Req() req: any) {
-    return this.authService.getAllUsersByGroup(req.user);
+  async getAllowedGroups(@Req() req: any) {
+    console.log("FUCK YOU", req.user)
+    return await this.authService.getAllowedGroups(req.user);
+  }
+
+  @Get('/users/:group')
+  @UseGuards(JwtAuthGuard)
+  async getAllUsers(@Req() req: any, @Param('group') groupId: number) {
+    return await this.authService.getAllUsersByGroup(req.user, Number(groupId));
   }
 
   @Get('/groups')

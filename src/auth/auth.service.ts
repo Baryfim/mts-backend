@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { Group, User, UserRole } from '@prisma/client';
+import { Department, Group, User, UserRole } from '@prisma/client';
 import { AuthUserCredentialsPartitial, AuthUserJwtCredentials } from './auth.types';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from './auth.dto';
@@ -25,29 +25,81 @@ export class AuthService {
         }
     }
 
-    async getAllUsersByGroup(user: User) {
-        switch(user.role) {
-            case "TEAM_LEADER":
-                const usersTeamLeader = await this.prismaService.user.findMany({
+    async getAllowedGroups(user: User) {
+        console.log(user.role)
+        console.log(UserRole.DEPARTMENT_HEAD == user.role)
+        switch (user.role) {
+            case UserRole.TEAM_LEADER:
+                const group = await this.prismaService.user.findFirst({
                     where: {
                         groupId: user.groupId,
                     }
                 });
-                return usersTeamLeader;
-            case "DEPARTMENT_HEAD":
-                const usersDepartmentHead = await this.prismaService.user.findMany({
+                return [group];
+            case UserRole.DEPARTMENT_HEAD:
+                const allowedGroups = await this.prismaService.group.findMany({
                     where: {
                         department: user.department,
                     }
                 });
-                return usersDepartmentHead;
+                return allowedGroups;
+            default:
+                throw new HttpException('FORBIDDEN', HttpStatus.FORBIDDEN);
+        }
+    }
+
+    async getAllUsersByGroup(user: User, groupId: number) {
+        switch (user.role) {
+            case UserRole.TEAM_LEADER:
+                if (user.groupId != groupId) {
+                    throw new HttpException('FORBIDDEN', HttpStatus.FORBIDDEN);
+                }
+                const usersL = await this.prismaService.user.findMany({
+                    where: {
+                        groupId: groupId,
+                    },
+                    include: {
+                        group: true
+                    }
+                });
+                return usersL.map(user => {
+                    const userRole = (user.role == UserRole.DEPARTMENT_HEAD) ? "Руководитель отдела" : (user.role == UserRole.TEAM_LEADER) ? "Руководитель группы" : "Штатный сотрудник";
+                    return Object.assign(user, {
+                        role: userRole,
+                        department: user.department == Department.REFERENCE ? "Справочно-информационный отдел" : "Отдел по работе с ключевыми клиентами",
+                    })
+                });
+            case UserRole.DEPARTMENT_HEAD:
+                const allowedGroups = await this.prismaService.group.findMany({
+                    where: {
+                        department: user.department,
+                    }
+                });
+                if (!allowedGroups.map(gr => gr.id).includes(groupId)) {
+                    throw new HttpException('FORBIDDEN', HttpStatus.FORBIDDEN);
+                }
+                const usersD = await this.prismaService.user.findMany({
+                    where: {
+                        groupId: groupId,
+                    },
+                    include: {
+                        group: true
+                    }
+                });
+                return usersD.map(user => {
+                    const userRole = (user.role == UserRole.DEPARTMENT_HEAD) ? "Руководитель отдела" : (user.role == UserRole.TEAM_LEADER) ? "Руководитель группы" : "Штатный сотрудник";
+                    return Object.assign(user, {
+                        role: userRole,
+                        department: user.department == Department.REFERENCE ? "Справочно-информационный отдел" : "Отдел по работе с ключевыми клиентами",
+                    })
+                });
             default:
                 throw new HttpException('FORBIDDEN', HttpStatus.FORBIDDEN)
         }
     }
 
     async getAllGroups(user: User) {
-        switch(user.role) {
+        switch (user.role) {
             case "TEAM_LEADER":
                 const groupsTeamLeader = await this.prismaService.group.findFirst({
                     where: {
