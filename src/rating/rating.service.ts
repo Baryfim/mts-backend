@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { Department, Group, User } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { RatingUrlType, SelfRatingType } from "./rating.types";
-import { group } from "console";
 
 @Injectable()
 export class RatingService {
