@@ -61,19 +61,9 @@ model Group {
 
   users User[]
 
-  groupOnPostCategory GroupOnPostCategory[]
+  postCategory PostCategory[]
 
   department Department
-}
-
-model GroupOnPostCategory {
-  group   Group @relation(fields: [groupId], references: [id])
-  groupId Int
-
-  postCategory   PostCategory @relation(fields: [postCategoryId], references: [id])
-  postCategoryId Int
-
-  @@id([groupId, postCategoryId])
 }
 
 model Goal {
@@ -92,7 +82,7 @@ model PostCategory {
   id    Int    @id @default(autoincrement())
   title String
 
-  groupOnPostCategory GroupOnPostCategory[]
+  group Group[]
 
   posts Post[]
 }
