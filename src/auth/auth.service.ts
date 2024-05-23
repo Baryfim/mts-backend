@@ -62,7 +62,7 @@ export class AuthService {
                 token: await this.getRefreshToken(user, refreshToken),
                 maxAge: +process.env.JWT_REFRESH_EXPIRATION_TIME
             },
-            user: this.buildProfileResponse(user),
+            user: await this.buildProfileResponse(user),
         };
     }
 
@@ -81,6 +81,8 @@ export class AuthService {
         });
 
         const savedTokenInDatabase = await this.usersService.updateRefreshTokens(user.login, user.password, oldRefreshToken, newRefreshToken);
+
+        console.log("SAVED IN DB", savedTokenInDatabase)
 
         if (savedTokenInDatabase) {
             return newRefreshToken;
