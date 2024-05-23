@@ -4,7 +4,7 @@ import { PostController } from './post.controller';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
-  providers: [PostService],
-  controllers: [PostController, PrismaService]
+  providers: [PostService, PrismaService],
+  controllers: [PostController]
 })
 export class PostModule {}
