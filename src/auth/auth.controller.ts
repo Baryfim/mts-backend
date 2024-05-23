@@ -41,7 +41,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async checkAccessToken(@Req() req: any) {
     const user: User = req.user;
-    return user.role;
+    return await this.authService.buildProfileResponse(user);
   }
 
   @Post('refresh')

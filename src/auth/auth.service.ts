@@ -61,7 +61,8 @@ export class AuthService {
             refreshToken: {
                 token: await this.getRefreshToken(user, refreshToken),
                 maxAge: +process.env.JWT_REFRESH_EXPIRATION_TIME
-            }
+            },
+            user: this.buildProfileResponse(user),
         };
     }
 
