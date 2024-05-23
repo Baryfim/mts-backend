@@ -137,6 +137,8 @@ export class AuthService {
 
         const savedTokenInDatabase = await this.usersService.updateRefreshTokens(user.login, user.password, oldRefreshToken, newRefreshToken);
 
+        console.log("SAVED IN DB", savedTokenInDatabase)
+
         if (savedTokenInDatabase) {
             return newRefreshToken;
         }
