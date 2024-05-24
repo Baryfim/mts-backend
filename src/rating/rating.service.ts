@@ -120,7 +120,7 @@ export class RatingService {
 
                 const groupResult = {
                     title: group.title,
-                    value: procceedRatings.averageSum / procceedRatings.count,
+                    value: Math.round(10 * procceedRatings.averageSum / procceedRatings.count) / 10,
                 }
 
                 response.push(groupResult);
