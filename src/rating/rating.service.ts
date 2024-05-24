@@ -153,7 +153,7 @@ export class RatingService {
     
                     const departmentResult = {
                         title: department == "REFERENCE" ? "Справочно-информационный отдел" : "Отдел ключевых направлений обслуживания",
-                        value: procceedRatings.averageSum / procceedRatings.count,
+                        value: Math.round(10 * procceedRatings.averageSum / procceedRatings.count) / 10,
                     }
     
                     response.push(departmentResult);
